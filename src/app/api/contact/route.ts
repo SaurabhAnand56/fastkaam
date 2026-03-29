@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
           <p style="color: #999; font-size: 12px; margin-top: 16px;">Reply directly to this email to respond.</p>
         </div>
       `,
-      replyTo: email,
+      reply_to: email,
     })
 
     // Send auto-reply to user
