@@ -17,8 +17,8 @@ export async function GET(req: NextRequest) {
   const [
     totalOrders, totalRevenue, totalUsers,
     ordersThisMonth, revenueThisMonth,
-    ordersThisWeek,  newUsersThisWeek,
-    ordersByStatus,  ordersByCardType,
+    ordersThisWeek, newUsersThisWeek,
+    ordersByStatus, ordersByCardType,
     topRevenueOrders,
   ] = await Promise.all([
     prisma.order.count(),
@@ -31,18 +31,30 @@ export async function GET(req: NextRequest) {
     prisma.order.groupBy({ by: ['status'], _count: { status: true } }),
     prisma.orderItem.groupBy({ by: ['cardType'], _count: { cardType: true }, _sum: { quantity: true } }),
     prisma.order.findMany({
-      take: 5, orderBy: { totalAmount: 'desc' },
+      take: 5,
+      orderBy: { totalAmount: 'desc' },
       where: { paymentStatus: 'PAID' },
-      include: { user: { select: { name: true, email: true } } },
-      select: { id: true, orderId: true, totalAmount: true, user: true, createdAt: true },
+      select: {
+        id: true,
+        orderId: true,
+        totalAmount: true,
+        createdAt: true,
+        user: {
+          select: { name: true, email: true },
+        },
+      },
     }),
   ])
 
   return NextResponse.json({
     summary: {
-      totalOrders, totalRevenue: Number(totalRevenue._sum.totalAmount ?? 0),
-      totalUsers, ordersThisMonth, revenueThisMonth: Number(revenueThisMonth._sum.totalAmount ?? 0),
-      ordersThisWeek, newUsersThisWeek,
+      totalOrders,
+      totalRevenue: Number(totalRevenue._sum.totalAmount ?? 0),
+      totalUsers,
+      ordersThisMonth,
+      revenueThisMonth: Number(revenueThisMonth._sum.totalAmount ?? 0),
+      ordersThisWeek,
+      newUsersThisWeek,
     },
     ordersByStatus,
     ordersByCardType,
