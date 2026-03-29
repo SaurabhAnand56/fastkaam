@@ -10,33 +10,34 @@ export const metadata: Metadata = {
 }
 
 async function getPosts(page: number) {
-  const limit = 9
-  const skip = (page - 1) * limit
-  const [posts, total] = await Promise.all([
-    prisma.blogPost.findMany({
-      where: { published: true },
-      orderBy: { publishedAt: 'desc' },
-      skip,
-      take: limit,
-      select: { id: true, title: true, slug: true, excerpt: true, featuredImage: true, publishedAt: true, views: true },
-    }),
-    prisma.blogPost.count({ where: { published: true } }),
-  ])
-  return { posts, total, totalPages: Math.ceil(total / limit) }
+  try {
+    const limit = 9
+    const skip = (page - 1) * limit
+    const [posts, total] = await Promise.all([
+      prisma.blogPost.findMany({
+        where: { published: true },
+        orderBy: { publishedAt: 'desc' },
+        skip,
+        take: limit,
+        select: { id: true, title: true, slug: true, excerpt: true, featuredImage: true, publishedAt: true, views: true },
+      }),
+      prisma.blogPost.count({ where: { published: true } }),
+    ])
+    return { posts, total, totalPages: Math.ceil(total / limit) }
+  } catch {
+    return { posts: [], total: 0, totalPages: 0 }
+  }
 }
 
 export default async function BlogPage({ searchParams }: { searchParams: { page?: string } }) {
   const page = Number(searchParams.page || 1)
-  const { posts, total, totalPages } = await getPosts(page)
+  const { posts, totalPages } = await getPosts(page)
 
   return (
     <div className="min-h-screen pt-20 pb-16">
-      {/* Header */}
       <div className="bg-gradient-to-br from-blue-600 to-teal-600 py-14 px-4 text-white text-center mb-12">
         <h1 className="text-3xl md:text-4xl font-bold mb-3">Blog & Guides</h1>
-        <p className="text-white/70 max-w-xl mx-auto">
-          Tips, guides and updates about PVC card printing and digital services
-        </p>
+        <p className="text-white/70 max-w-xl mx-auto">Tips, guides and updates about PVC card printing and digital services</p>
       </div>
 
       <div className="max-w-5xl mx-auto px-4">
@@ -53,8 +54,7 @@ export default async function BlogPage({ searchParams }: { searchParams: { page?
                   <article className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all hover:-translate-y-1 h-full flex flex-col">
                     <div className="aspect-video overflow-hidden bg-gradient-to-br from-blue-50 to-teal-50 dark:from-blue-950 dark:to-teal-950">
                       {post.featuredImage ? (
-                        <img src={post.featuredImage} alt={post.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <img src={post.featuredImage} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-4xl">📝</div>
                       )}
@@ -70,17 +70,13 @@ export default async function BlogPage({ searchParams }: { searchParams: { page?
                         <div className="flex items-center gap-3 text-xs text-gray-400">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            {post.publishedAt
-                              ? new Date(post.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
-                              : ''}
+                            {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}
                           </span>
                           {post.views > 0 && (
-                            <span className="flex items-center gap-1">
-                              <Eye className="w-3 h-3" /> {post.views}
-                            </span>
+                            <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {post.views}</span>
                           )}
                         </div>
-                        <span className="text-xs text-orange-500 font-semibold group-hover:gap-2 flex items-center gap-1">
+                        <span className="text-xs text-orange-500 font-semibold flex items-center gap-1">
                           Read <ArrowRight className="w-3 h-3" />
                         </span>
                       </div>
@@ -89,16 +85,12 @@ export default async function BlogPage({ searchParams }: { searchParams: { page?
                 </Link>
               ))}
             </div>
-
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                   <Link key={p} href={`/blog?page=${p}`}
                     className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-medium transition-all ${
-                      p === page
-                        ? 'bg-orange-500 text-white shadow-md'
-                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-orange-300'
+                      p === page ? 'bg-orange-500 text-white shadow-md' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-orange-300'
                     }`}>
                     {p}
                   </Link>
